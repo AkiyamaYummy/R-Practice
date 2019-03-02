@@ -1,0 +1,208 @@
+---
+title: "R Notebook"
+output:
+  html_document:
+    df_print: paged
+---
+创建数值从1到10，间隔为2，名称为A的向量
+```{r}
+A <- c(1:10)[c(TRUE,FALSE)]
+A
+```
+将数字1到12每个重复3次写入向量B中：(1,1,1，…,12,12,12) 
+```{r}
+B <- rep(c(1:12),times=1,each=3)
+B
+```
+输出B向量的长度
+```{r}
+length(B)
+```
+去重后的向量数值 
+```{r}
+unique(B)
+```
+输出A、B的交集
+```{r}
+intersect(A,B)
+```
+并集C 
+```{r}
+C <- union(A,B)
+C
+```
+差集
+```{r}
+setdiff(A,B)
+```
+将集合C按降序排序 
+```{r}
+C <- C[order(-C)]
+C
+```
+选取C的第3个元素
+```{r}
+C[3]
+```
+第4到最后的元素
+```{r}
+C[4:length(C)]
+```
+数值在区间大于等于3小于7的元素 
+```{r}
+C[C>=3 & C<7]
+```
+将数值型向量C转化为字符型
+```{r}
+C <- as.character(C)
+C
+```
+向量C的长度
+```{r}
+length(C)
+```
+最大值
+```{r}
+max(C)
+```
+最大值索引
+```{r}
+which.max(C)
+```
+将A转化成数组类型变量名为a
+```{r}
+a <- array(A)
+a
+```
+查看a的类型 
+```{r}
+class(a)
+```
+用1~20的数字构成两个4*5的矩阵，其中M1为按列输入
+```{r}
+M1 <- matrix(1:20,nrow=4,ncol=5)
+M1
+```
+M2为按行输入
+```{r}
+M2 <- matrix(1:20,nrow=4,ncol=5,byrow=TRUE)
+M2
+```
+计算M3为M1+M2
+```{r}
+M3 <- M1+M2
+M3
+```
+构建M4，它由M3各列构成，但不包含第3列
+```{r}
+M4 <- M3[,-3]
+M4
+```
+用1~9的数字构成一个3*3的按列输入的矩阵M5
+```{r}
+M5 <- matrix(1:9,nrow=3,ncol=3)
+M5
+```
+求M5的对角阵M6
+```{r}
+M6 <- M5*diag(3)
+M6
+```
+计算M5与 M6的矩阵乘法得到M7
+```{r}
+M7 <- M5*M6
+M7
+```
+求M7的转置矩阵M8
+```{r}
+M8 <- t(M7)
+M8
+```
+用1~12的数字构成一个4*3的按列输入的矩阵M9
+```{r}
+M9 <- matrix(1:12,nrow=4,ncol=3)
+M9
+```
+求M9的列加和
+```{r}
+colSums(M9)
+```
+求M9的行平均
+```{r}
+rowMeans(M9)
+```
+从csv文件中读取algae数据集赋值给algae1 
+```{r}
+algae1 <- read.table("algae.csv",header=TRUE,sep=",")
+algae1
+```
+查看algae1的前10条数据
+```{r}
+algae1[1:10,]
+```
+输出algae1的基本统计信息
+```{r}
+summary(algae1)
+```
+查看数据的维度
+```{r}
+dim(algae1)
+```
+查看特征名称
+```{r}
+names(algae1)
+```
+查看season列的数据类型 
+```{r}
+class(algae1$season)
+```
+查看size列的数据类型 
+```{r}
+class(algae1$size)
+```
+查看NO3列的数据类型 
+```{r}
+class(algae1$NO3)
+```
+选出季节为夏天的样本存在newalgael
+```{r}
+newalgael <- algae1[algae1$season=="summer",]
+newalgael
+```
+输出newalgael样本行数
+```{r}
+dim(newalgael)[1]
+```
+将newalgael的列cl中的缺失值用本列得中位数填充
+```{r}
+newalgael[is.na(newalgael$Cl),"Cl"]<-median(newalgael$Cl,na.rm=TRUE)
+newalgael
+```
+输出原始样本的行数
+```{r}
+dim(algae1)[1]
+```
+将algae1删除含有缺失值的样本
+```{r}
+algae1 <- na.omit(algae1)
+algae1
+```
+输出剩余样本行数
+```{r}
+dim(algae1)[1]
+```
+任意修改某个点的值并另存为algae2
+```{r}
+algae2 <- edit(algae1)
+```
+将algae1和algae2，按行合并得到algae3
+```{r}
+algae3 <- rbind(algae1,algae2)
+```
+输出algae1、algae2 和algae3的样本行数
+```{r}
+dim(algae1)[1]
+dim(algae2)[1]
+dim(algae3)[1]
+
+```

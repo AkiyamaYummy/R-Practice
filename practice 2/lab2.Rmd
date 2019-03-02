@@ -1,0 +1,122 @@
+---
+title: "R第二次实训"
+output: html_notebook
+---
+#题目1
+将item_feature1.csv读入，存储到df中
+```{r}
+df = read.csv("item_feature1.csv")
+df
+```
+并给df的列分别命名为：date 、item_id 、cate_id 、cate_level_id 、brand_id 、supplier_id 、pv_ipv 、cart_uv 、collect_uv 和cart_ipv 
+```{r}
+names(df) <- c("date","item_id","cate_id","cate_level_id","brand_id","supplier_id","pv_ipv","cart_uv","collect_uv","cart_ipv")
+df
+```
+为df中的cart_uv 重新编码并将新变量命名为recode，将小于5000的归为less,将大于等于5000小于15000的归为common,其他的归为many
+```{r}
+df <- within(df,{
+  recode <- "many"
+  recode[cart_uv < 5000] <- "less"
+  recode[cart_uv >= 5000 & cart_uv < 15000] <- "common"
+})
+df
+```
+查看尾部的10条数据
+```{r}
+tail(df,10)
+```
+查看df中是否有缺失值
+```{r}
+dim(df)[1]!=dim(na.omit(df))[1]
+```
+删除df中所有含缺失值的行
+```{r}
+df <- na.omit(df)
+df
+```
+将df中的date字段转换成日期类型
+```{r}
+df$date <- as.Date(as.character(df$date),"%Y%m%d")
+df
+```
+将df按照date字段升序排列，另存为df_asc，并查看前10条数据
+```{r}
+df_asc <- df[order(df$date),]
+head(df_asc,10)
+
+```
+将df按照date字段升序和item_id降序排序，另存在df1中；并查看前5条数据
+```{r}
+df1 <- df[order(df$date,-df$item_id),]
+head(df1,5)
+```
+#题目2
+
+从df中选取date 、item_id 、cate_id 、cart_uv 、recode、collect_uv 和cart_ipv字段另存为df1
+```{r}
+df1 <- df[c("date","item_id","cate_id","cart_uv","recode","collect_uv","cart_ipv")]
+df1
+```
+剔除df1中的cart_ipv字段另存为df2
+```{r}
+df2 <- df1[!names(df1) %in% "cart_ipv"]
+df2
+```
+从df1中选取item_id 大于500的并且recode为less的数据另存为df3
+```{r}
+df3 <- df1[df1$item_id > 500 & df1$recode == "less",]
+df3
+```
+从df中选取date为2015-02-14，item_id为300，并保留date到supplier_id其间的所有列，另存为df_sub
+```{r}
+df_sub <- subset(df,date == as.Date("2015-02-14") & item_id == 300,select = date:supplier_id)
+df_sub
+```
+从df中无放回的随机抽取500条样本，另存为df4,查看样本的维度和数据的头部数据
+```{r}
+df4 <- df[sample(1:nrow(df),500,replace=FALSE),]
+dim(df4)
+head(df4)
+```
+从df1中选取列从item_id到cate_id的数据，另存为df1_temp
+```{r}
+df1_temp <- subset(df1,select=item_id:cate_id)
+df1_temp
+```
+然后与df按照item_id合并存为df5
+```{r}
+#df5 <- merge(df1_temp,df,by="item_id")
+#df5
+```
+从df1中利用sql的方法选取item_id为300的数据，另存为df6中
+```{r}
+#install.packages("sqldf")
+#library(sqldf)
+df6 <- sqldf("select * from df1 where item_id=300")
+df6
+```
+从df2中有放回的随机取出与df6一样多的数据条数做为df_tem
+```{r}
+df_tem <- df2[sample(1:nrow(df2),nrow(df6),replace=TRUE),]
+df_tem
+```
+然后与df6按列合并，另存为df7
+```{r}
+df7 <- cbind(df_tem,df6)
+df7
+```
+从df中选取date 、item_id、cate_id和cart_ipv另存为feature
+```{r}
+feature <- df[,c("date","item_id","cate_id","cart_ipv")]
+feature
+```
+并将feature 按日期升序排列
+```{r}
+feature <- feature[order(feature$date),]
+feature
+```
+取出feature 中唯一的cate_id
+```{r}
+unique(feature$cate_id)
+```

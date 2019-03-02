@@ -1,0 +1,86 @@
+---
+title: "R第四次实训"
+output: html_notebook
+---
+#题目1
+###1.1
+#####1.1.1 通过读取“hospital-data.csv”将数据保存到df中
+#####1.1.2 获取该数据的条数
+#####1.1.3 查看数据中的前5条数据
+```{r}
+df <- read.csv("hospital-data.csv"); #1.1.1
+#install.packages("stringr")
+library(stringr)
+df <- within(df,{
+    City <- str_trim(City,'both')
+    State <- str_trim(State,'both')
+  }
+)#去除数据前后空格
+df
+```
+```{r}
+dim(df)[1] #1.1.2
+```
+```{r}
+head(df,5) #1.1.3
+```
+###1.2
+#####1.2.1 查看数据概况
+#####1.2.2 求得邮编的范围
+```{r}
+summary(df) #1.2.1
+```
+```{r}
+range(as.character(df$Provider.Number)) #1.2.2
+```
+###1.3
+#####1.3.1 应用sapply函数，通过调用用户自定义函数，返回电话号码的最大值，最小值，均值，中位数，标准差和方差
+```{r}
+sapply(df[c("Phone.Number")],function(x){
+    return (c(max=max(x),min=min(x),mean=mean(x),median=median(x),sd=sd(x),var=var(x)))
+  }
+) #1.3.1
+```
+###1.4
+#####1.4.1 利用aggregate求取各州的电话号码的中位数
+```{r}
+aggregate(df[c("Phone.Number")],by=list(State=df$State),median) #1.4.1
+```
+###1.5
+#####1.5.1 利用by求取各城市的电话号码的最大值和最小值；显示结果的前3条数据。 
+```{r}
+by(df[c("Phone.Number")],df$City,function(x){
+    return (c(max=max(x),min=min(x)))
+  }
+)[1:3] #1.5.1
+```
+###1.6
+#####1.6.1 对所属州生成简单的频数统计表
+#####1.6.2 将这个频数表转化为比例值
+```{r}
+tab <- table(df$State) #1.6.1
+tab
+```
+```{r}
+prop.table(tab) #1.6.2
+rm(tab)
+```
+###1.7
+#####1.7.1 建立所属州和医院类型的二维列联表，命名为mycontable
+#####1.7.2 按列生成边际和
+```{r}
+mycontable <- xtabs(~State+Hospital.Type,data=df) #1.7.1
+head(mycontable)
+```
+```{r}
+mycontable <- addmargins(mycontable,2) #1.7.2
+head(mycontable)
+```
+###1.8
+#####1.8.1 利用CrossTable建立所属乡镇和是否提供急救服务字段的二维列联表，命名为 mycrosstable。
+```{r}
+#install.packages("gmodels")
+library(gmodels)
+mycrosstable <- CrossTable(df$County,df$Emergency.Services) #1.8.1
+```
+

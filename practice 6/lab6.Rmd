@@ -1,0 +1,93 @@
+---
+title: "R第六次实训"
+output: html_notebook
+---
+#数据介绍
+#####systation.csv中包含的是沈阳地铁站相关线路的经纬度数据，字段介绍如下表：
+|变量名称|描述|
+|:-|:-|
+|station|站名|
+|line|线路编号|
+|line_id|站编号|
+|gps_lon|站处于的经度|
+|gps_lat|站处于的维度|
+
+#####SY-20150401.csv中提供的是一卡通刷卡数据，字段介绍如下表：
+|变量名称|描述|
+|:-|:-|
+|V1|卡编号|
+|V2|刷卡日期|
+|V3|刷卡时间|
+|V4|刷卡站点|
+|V5|刷卡类型|
+|V6|票价|
+|V7|是否优惠|
+#题目
+#####1.使用leaflet绘制地铁线路图，要求
+&emsp;&emsp;(1)图中绘制地铁线路
+
+&emsp;&emsp;(2)各站点展示进站流量（08:00:00-08:05:00间的数据），流量的大小用标记的大小表示，并且提示线路、站点、流量的具体数值。
+
+<font color="red">学生注：代码中包含CSS3轮播动画，请在支持CSS3的浏览器中查看完整效果。</font>
+```{r}
+library(leaflet)
+library(data.table)
+library(lubridate)
+library(tidyr)
+station <- fread("systation.csv")
+station$line <- as.character(station$line)
+flow <- fread("SY-20150401.csv")
+flow <- separate(flow[V5=="地铁"&V6==0&hms(V3)>=hms("08:00:00")&hms(V3)<=hms("08:05:00"),.N,by=V4],V4,c("line","station"),sep = "号线",remove = TRUE)
+names(flow)[3] <- "flow"
+flow <- merge(flow,station,by=c("station","line"),all=TRUE)[order(-line)]
+flow$flow[is.na(flow$flow)] <- 0
+line1 <- flow[line==1][order(line_id)]
+line2 <- flow[line==2][order(line_id)]
+getPopupHTML <- function(s,l,f){
+  return (paste("<style>
+                  .leaflet-popup-content-wrapper{background:black}
+                  .leaflet-popup-tip{background:black}
+                  .ex-pan{
+                    color:white;font-weight:bold;font-family:\"simsun\";font-size:15px;text-shadow:0px 0px 30px white;
+                    height:20px;width:200px;position:relative;top:0;left:0;
+                  }
+                  .line{height:inherit;width:inherit;position:absolute;top:0;left:0;}
+                  .block{height:30px;display:inline-block;float:left;}
+                  .block-l{width:80px;}
+                  .block-r{width:120px;text-align:right;}
+                  @keyframes tr1{0%  {opacity:0}3%  {opacity:1}30% {opacity:1}33% {opacity:0}100%{opacity:0}}
+                  @keyframes tr2{0%  {opacity:0}33% {opacity:0}36% {opacity:1}64% {opacity:1}67% {opacity:0}100%{opacity:0}}
+                  @keyframes tr3{0%  {opacity:0}67% {opacity:0}70% {opacity:1}97% {opacity:1}100%{opacity:0}}
+                </style>
+                <div class='ex-pan'>
+                  <div class='line' style='animation:tr1 7s infinite;'><div class='block block-l'>站点名称</div><div class='block block-r'>",s,"</div></div>
+                  <div class='line' style='animation:tr2 7s infinite;'><div class='block block-l'>线路名称</div><div class='block block-r'>",l,"号线</div></div>
+                  <div class='line' style='animation:tr3 7s infinite;'><div class='block block-l'>站点流量</div><div class='block block-r'>",f,"</div></div>
+                </div>"))
+}
+maxflow <- max(flow$flow)
+leaflet() %>% addProviderTiles("OpenStreetMap.Mapnik") %>% 
+  addPolylines(lng=line1$gps_lon,lat=line1$gps_lat,color="skyblue",opacity=1) %>% 
+  addPolylines(lng=line2$gps_lon,lat=line2$gps_lat,color="orange",opacity=1) %>%
+  addCircleMarkers(
+    lng=flow$gps_lon,lat=flow$gps_lat,radius=flow$flow/maxflow*10+5,
+    color=ifelse(flow$line==1,"darkgreen","darkred"),stroke=FALSE,fillOpacity=1,
+    popup=getPopupHTML(flow$station,flow$line,flow$flow)
+  )
+
+```
+#####2.使用plotly绘制（17:00:00-17:05:00）出站流量最多的五个站点的出站流量(柱状图)。
+```{r}
+library(plotly)
+library(data.table)
+library(lubridate)
+library(tidyr)
+flow <- fread("SY-20150401.csv")
+flow <- separate(flow[V5=="地铁"&V6!=0&hms(V3)>=hms("17:00:00")&hms(V3)<=hms("17:05:00"),.N,by=V4],V4,c("line","station"),sep = "号线",remove = TRUE)[order(-N)][1:5]
+maxflow <- max(flow$N)+100
+minflow <- min(flow$N)-100
+colv <- 1-(flow$N-minflow)/maxflow
+plot_ly(x=flow$station,y=flow$N,color=I(rgb(colv,colv,colv))) %>% layout(title = "2015年4月1日 17:00:00-17:05:00 出站流量最多的五个站点的出站流量(柱状图)",
+yaxis=list(title='流量'),xaxis=list(title='站点名称'))
+```
+

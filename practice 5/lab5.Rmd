@@ -1,0 +1,42 @@
+---
+title: "R第五次实训"
+output: html_notebook
+---
+#题目一
+###将数据处理成每条数据处于一天中的第几个5分钟（说明：00:00:01在第一个5分钟内，00:10:13 在第三个5分钟内），由于一天可能多次乘坐地铁，根据卡号和进站时间，查询最近出站的时间， 作为本次出站时间。参考函数lubridate::hms，lubridate:: period_to_seconds。 处理的最终结果：dataframe(名称trade.metro.in.out )
+###提交的表格按照card.id排序。 Notebook中展示输出结果为 head(trade.metro.in.out,10) 并输出本地文件 shmetro_line_in_out.csv
+```{r}
+#install.packages("data.table")
+library(data.table)
+#install.packages("lubridate")
+library(lubridate)
+df <- fread("SY-20150401.csv")
+names(df) <- c('card_id','date','time','station','vehicle',' money','property')
+df <- df[vehicle == "地铁"]
+df <- separate(df, station, c("line","station"), sep = "号线", remove = TRUE)
+df <- df[,M5:=period_to_seconds(hms(time)) %/% 300 + 1][order(M5,time)]
+df
+```
+```{r}
+dfin <- df[` money`==0L][,c("date","vehicle"," money","property"):=NULL]
+dfout <- df[` money`!=0L][,c("date","vehicle","property"):=NULL]
+names(dfin) <- c('card.id','time.in',"line.in",'station.in',"M5.in")
+names(dfout) <- c('card.id','time.out',"line.out",'station.out'," money","M5.out")
+trade.metro.in.out <- merge(dfin,dfout,by="card.id")[,duration:=period_to_seconds(hms(time.out))-period_to_seconds(hms(time.in))][duration>0][,md:=min(duration),by=c("card.id","M5.in")][duration==md][,md:=NULL][order(card.id)]
+write.csv(trade.metro.in.out,"shmetro_line_in_out.csv")
+head(trade.metro.in.out,10)
+```
+#题目二
+###通过题目1中的dataframe（trade.metro.in.out）进行统计，统计一天中进站站点与出站站点之间的客流量（站间流量）；选取站间流量最大的前10条数据，在Notebook中查看前6条
+```{r}
+trade.in.count <- trade.metro.in.out[,.N,by=station.in][order(-N)][1:10]
+trade.out.count <- trade.metro.in.out[,.N,by=station.out][order(-N)][1:10]
+head(trade.in.count,6)
+head(trade.out.count,6)
+```
+
+
+
+
+
+
